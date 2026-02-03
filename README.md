@@ -62,32 +62,6 @@ Sempre aprendendo algo novo conforme a necessidade do projeto.
 
 ---
 
-## 📈 Estatísticas do GitHub
-
-<div align="center">
-
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=FaelDev-ux&show_icons=true&theme=transparent&hide_border=true)
-
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=FaelDev-ux&layout=compact&theme=transparent&hide_border=true)
-
-</div>
-
-> ℹ️ Estatísticas não definem habilidade — mas mostram consistência.
-
----
-
-## 🧩 Plugins & Badges
-
-<div align="center">
-
-![GitHub followers](https://img.shields.io/github/followers/FaelDev-ux?style=for-the-badge)
-![GitHub stars](https://img.shields.io/github/stars/FaelDev-ux?style=for-the-badge)
-![Profile views](https://komarev.com/ghpvc/?username=FaelDev-ux&style=for-the-badge)
-
-</div>
-
----
-
 ## 📬 Contato
 
 Se quiser trocar uma ideia, falar sobre algum projeto ou oportunidade:
