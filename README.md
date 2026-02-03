@@ -1,28 +1,104 @@
+<div align="center">
+
 # 👋 Olá, eu sou o Fael
 
-Sou desenvolvedor e gosto de construir projetos reais, com foco em funcionalidade, clareza e boa experiência de uso.
+### Desenvolvedor focado em criar projetos reais, funcionais e bem pensados
 
-Aprendo muito mais colocando a mão na massa do que só consumindo teoria. Gosto de pegar uma ideia, transformar em algo funcional e ir melhorando versão após versão.
+🌐 **Portfólio:** https://r2codding.vercel.app  
+📍 Brasil  
 
----
-
-## 🚀 O que você vai encontrar aqui
-- Projetos pessoais
-- Experimentos e estudos
-- Ideias que viraram código
-
-Nem tudo aqui é perfeito — mas tudo faz parte do processo de evolução.
+</div>
 
 ---
 
-## 🌐 Meu portfólio
-👉 https://r2codding.vercel.app/
+## 🧠 Sobre mim
 
-Lá você encontra meus projetos organizados, com mais detalhes sobre cada um.
+Sou desenvolvedor e gosto de transformar ideias em soluções que realmente funcionam.  
+Aprendo muito mais **construindo projetos reais** do que apenas consumindo teoria.
+
+Meu foco é entender o problema, estruturar bem a solução e evoluir cada projeto com o tempo — tanto em código quanto em experiência de uso.
+
+Não acredito em código perfeito, mas sim em **código que evolui**.
+
+---
+
+## 🚀 O que você vai encontrar por aqui
+
+✔️ Projetos pessoais  
+✔️ Estudos aplicados  
+✔️ Experimentos e ideias em evolução  
+✔️ Código feito para aprender e melhorar  
+
+Cada repositório representa uma etapa do meu crescimento como desenvolvedor.
+
+---
+
+## 🗂️ Portfólio
+
+No meu portfólio você encontra meus projetos organizados, com detalhes como:
+- descrição de cada projeto
+- imagens
+- tecnologias utilizadas
+- evolução da ideia
+
+👉 **Acesse aqui:**  
+🔗 https://r2codding.vercel.app
+
+---
+
+## 🛠️ Tecnologias & Conceitos
+
+Não me prendo a buzzwords. Trabalho e estudo conceitos como:
+
+- Lógica de programação
+- Estruturação de projetos
+- Organização de código
+- Boas práticas
+- Versionamento com Git
+- Integração com APIs
+- Criação de interfaces funcionais
+
+Sempre aprendendo algo novo conforme a necessidade do projeto.
+
+---
+
+## 📈 Estatísticas do GitHub
+
+<div align="center">
+
+![GitHub Stats](https://github-readme-stats.vercel.app/api?username=FaelDev-ux&show_icons=true&theme=transparent&hide_border=true)
+
+![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=FaelDev-ux&layout=compact&theme=transparent&hide_border=true)
+
+</div>
+
+> ℹ️ Estatísticas não definem habilidade — mas mostram consistência.
+
+---
+
+## 🧩 Plugins & Badges
+
+<div align="center">
+
+![GitHub followers](https://img.shields.io/github/followers/FaelDev-ux?style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/FaelDev-ux?style=for-the-badge)
+![Profile views](https://komarev.com/ghpvc/?username=FaelDev-ux&style=for-the-badge)
+
+</div>
 
 ---
 
 ## 📬 Contato
-Se quiser trocar uma ideia ou saber mais sobre algum projeto, é só chamar 😉
 
+Se quiser trocar uma ideia, falar sobre algum projeto ou oportunidade:
 
+- 🌐 Portfólio: https://r2codding.vercel.app
+- 💬 GitHub Issues ou Discussions
+
+---
+
+<div align="center">
+
+### “Projetos reais. Aprendizado contínuo. Evolução constante.”
+
+</div>
