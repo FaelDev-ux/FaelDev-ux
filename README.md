@@ -42,7 +42,7 @@ No meu portfólio você encontra meus projetos organizados, com detalhes como:
 - evolução da ideia
 
 👉 **Acesse aqui:**  
-🔗 https://r2codding.vercel.app
+🔗 https://r2labss.vercel.app
 
 ---
 
@@ -66,7 +66,7 @@ Sempre aprendendo algo novo conforme a necessidade do projeto.
 
 Se quiser trocar uma ideia, falar sobre algum projeto ou oportunidade:
 
-- 🌐 Portfólio: https://r2codding.vercel.app
+- 🌐 Portfólio: https://r2labss.vercel.app
 - 💬 GitHub Issues ou Discussions
 
 ---
