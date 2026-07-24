@@ -4,7 +4,7 @@
 
 ### Desenvolvedor focado em criar projetos reais, funcionais e bem pensados
 
-🌐 **Portfólio:** https://r2labss.vercel.app  
+🌐 **Portfólio:** www.r2labss.dev 
 📍 Brasil  
 
 </div>
@@ -42,7 +42,7 @@ No meu portfólio você encontra meus projetos organizados, com detalhes como:
 - evolução da ideia
 
 👉 **Acesse aqui:**  
-🔗 https://r2labss.vercel.app
+🔗 www.r2labss.dev 
 
 ---
 
@@ -66,7 +66,7 @@ Sempre aprendendo algo novo conforme a necessidade do projeto.
 
 Se quiser trocar uma ideia, falar sobre algum projeto ou oportunidade:
 
-- 🌐 Portfólio: https://r2labss.vercel.app
+- 🌐 Portfólio: www.r2labss.dev 
 - 💬 GitHub Issues ou Discussions
 
 ---
