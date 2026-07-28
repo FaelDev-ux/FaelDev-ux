@@ -1,15 +1,15 @@
 
       <svg
-        width="304"
+        width="482.099995136261"
         height="195"
-        viewBox="0 0 304 195"
+        viewBox="0 0 482.099995136261 195"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-labelledby="descId"
       >
-        <title id="titleId">Fael Dev&#39;s GitHub Stats, Rank: C</title>
-        <desc id="descId">Total Stars Earned: 3, Total Commits  : 202, Total PRs: 5, Total Issues: 0, Contributed to (last year): 0</desc>
+        <title id="titleId">Rubens Rafael &#8226; Fael Dev&#39;s GitHub Stats, Rank: C</title>
+        <desc id="descId">Total Stars Earned: 3, Total Commits  : 204, Total PRs: 5, Total Issues: 0, Contributed to (last year): 0</desc>
         <style>
           .header {
             font: 600 18px 'Segoe UI', Ubuntu, Sans-Serif;
@@ -73,7 +73,7 @@
         stroke-dashoffset: 251.32741228718345;
       }
       to {
-        stroke-dashoffset: 229.92352512689138;
+        stroke-dashoffset: 229.87307816555997;
       }
     }
   
@@ -110,7 +110,7 @@
           rx="4.5"
           height="99%"
           stroke="#e4e2e2"
-          width="303"
+          width="481.099995136261"
           fill="#0A101F"
           stroke-opacity="0"
         />
@@ -126,7 +126,7 @@
         y="0"
         class="header"
         data-testid="header"
-      >Fael Dev&#39;s GitHub Stats</text>
+      >Rubens Rafael &#8226; Fael Dev&#39;s GitHub Stats</text>
     </g>
       </g>
     
@@ -166,7 +166,7 @@
         x="224.01"
         y="12.5"
         data-testid="commits"
-      >202</text>
+      >204</text>
     </g>
   </g><g transform="translate(0, 50)">
     <g class="stagger" style="animation-delay: 750ms" transform="translate(25, 0)">
