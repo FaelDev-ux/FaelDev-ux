@@ -8,9 +8,9 @@
 
 ```console
 rubens@r2labss:~$ whoami
-Rubens Rafael · Desenvolvedor Full Stack
+Rubens Rafael · Desenvolvedor Front End
 
-rubens@r2labss:~$ missão
+rubens@r2labss:~$ mission
 Transformar problemas em produtos web claros, rápidos e úteis.
 ```
 
