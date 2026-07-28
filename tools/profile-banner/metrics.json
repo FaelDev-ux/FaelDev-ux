@@ -1,0 +1,75 @@
+{
+  "canvas": [
+    1180,
+    610
+  ],
+  "portrait_grid": [
+    300,
+    340
+  ],
+  "bands": 94,
+  "traveller_dots": 900,
+  "intro_groups": 60,
+  "intro_seconds": 3.2,
+  "loop_seconds": 14.2,
+  "key_times": [
+    0.0,
+    0.21127,
+    0.30282,
+    0.44366,
+    0.53521,
+    0.67606,
+    0.76761,
+    0.90845,
+    1.0
+  ],
+  "source_sha256": "4cc5bcae3941aabb04ab9219b243af396cefea30d2c5f84418096f5a8e7d09d4",
+  "intermediate": {
+    "file": "portrait-data.npz",
+    "file_bytes": 105946,
+    "sha256": "b0ea4f6a8e0483c8dec0d0ccf5930b6a1ac8833676243d32998817f401bce792",
+    "npz_valid": true,
+    "members": [
+      "subject_mask.npy",
+      "dark_dither.npy",
+      "dark_bands.npy",
+      "dark_travellers.npy",
+      "light_dither.npy",
+      "light_bands.npy",
+      "light_travellers.npy",
+      "metadata.json"
+    ]
+  },
+  "themes": {
+    "dark": {
+      "dot_count": 45324,
+      "foreground_mask_pixels": 63744,
+      "noise_sigma": 3.9692,
+      "intro_spatial_evenness": 0.0383,
+      "straight_boundary_metric": 0.00306,
+      "mean_travel_px": {
+        "portrait_to_react": 84.191,
+        "react_to_code": 40.625,
+        "code_to_vercel": 48.615,
+        "vercel_to_portrait": 93.381
+      },
+      "file_bytes": 486708,
+      "xml_valid": true
+    },
+    "light": {
+      "dot_count": 70011,
+      "foreground_mask_pixels": 102000,
+      "noise_sigma": 3.909,
+      "intro_spatial_evenness": 0.01924,
+      "straight_boundary_metric": 0.00306,
+      "mean_travel_px": {
+        "portrait_to_react": 71.56,
+        "react_to_code": 35.982,
+        "code_to_vercel": 46.699,
+        "vercel_to_portrait": 102.605
+      },
+      "file_bytes": 717701,
+      "xml_valid": true
+    }
+  }
+}
