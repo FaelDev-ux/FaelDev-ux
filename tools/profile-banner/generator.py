@@ -8,6 +8,7 @@ Source of truth:
 Outputs:
   - dark.svg / light.svg (1180x610 animated SVG)
   - metrics.json
+  - portrait-data.npz
 
 The portrait pipeline follows the supplied brief: 300x340 crop, autocontrast
 cutoff 1, contrast 1.3, UnsharpMask(3, 140), serpentine Floyd-Steinberg, and
@@ -53,14 +54,12 @@ PROFILE = {
     "Education": "Eng. de Software",
     "Status": "Building + Learning + Shipping",
     "ToolChain": "VS Code · Git · Vercel",
-    "Core.Lang": "TypeScript · JavaScript · Python",
-    "Core.Frontend": "Next.js · React · Tailwind",
-    "Core.Backend": "FastAPI · Supabase",
-    "Core.Database": "PostgreSQL · Supabase",
-    "Core.Infra": "Vercel · Firebase",
+    "Core.Lang": "JavaScript · Python",
+    "Core.Frontend": "Next.js · Tailwind",
+    "Core.Database": "Firebase · Supabase",
     "Grid.Mail": "rubensnobrega2003@gmail.com",
     "Grid.Portfolio": "www.r2labss.dev",
-    "Grid.Instagram": "@fael.rdgs",
+    "Grid.Instagram": "@r.noobrega",
     "Grid.GitHub": "FaelDev-ux",
 }
 
@@ -356,21 +355,48 @@ def sample_polyline(vertices: list[tuple[float, float]], n: int) -> list[tuple[f
     return out
 
 
-def react_points(n: int) -> list[tuple[float, float]]:
+def thick_line_points(
+    start: tuple[float, float],
+    end: tuple[float, float],
+    n: int,
+    width: float,
+    layers: int,
+) -> list[tuple[float, float]]:
+    """Sample a deterministic, optically solid line from parallel dot rows."""
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    length = math.hypot(dx, dy)
+    nx, ny = -dy / length, dx / length
+    counts = [n // layers] * layers
+    for i in range(n % layers):
+        counts[i] += 1
     out: list[tuple[float, float]] = []
-    center_n = 54
-    ring_n = n - center_n
-    for axis in (0.0, math.pi / 3, -math.pi / 3):
-        count = ring_n // 3
-        ca, sa = math.cos(axis), math.sin(axis)
-        for i in range(count):
-            t = 2 * math.pi * i / count
-            ex, ey = 110 * math.cos(t), 42 * math.sin(t)
-            out.append((150 + ex * ca - ey * sa, 170 + ex * sa + ey * ca))
-    for i in range(n - len(out)):
-        t = 2 * math.pi * i / max(1, n - len(out))
-        out.append((150 + 18 * math.cos(t), 170 + 18 * math.sin(t)))
-    return out[:n]
+    for layer, count in enumerate(counts):
+        offset = width * (layer / max(1, layers - 1) - 0.5)
+        shifted = [
+            (start[0] + nx * offset, start[1] + ny * offset),
+            (end[0] + nx * offset, end[1] + ny * offset),
+        ]
+        out.extend(sample_polyline(shifted, count))
+    return out
+
+
+def nextjs_points(n: int) -> list[tuple[float, float]]:
+    """Recognizable Next.js mark: enclosing ring and its diagonal N monogram."""
+    if n != TRAVELLERS:
+        raise ValueError(f"Next.js state requires exactly {TRAVELLERS} dots")
+
+    out: list[tuple[float, float]] = []
+    ring_n = 300
+    for i in range(ring_n):
+        angle = (2 * math.pi * i / ring_n) - (math.pi / 2)
+        out.append((150 + 111 * math.cos(angle), 170 + 111 * math.sin(angle)))
+
+    # The long diagonal exits toward the lower-right, matching the familiar mark.
+    out.extend(thick_line_points((98, 109), (98, 231), 180, 10, 6))
+    out.extend(thick_line_points((98, 109), (248, 271), 300, 11, 6))
+    out.extend(thick_line_points((205, 109), (205, 204), 120, 10, 6))
+    assert len(out) == n
+    return out
 
 
 def code_points(n: int) -> list[tuple[float, float]]:
@@ -493,6 +519,7 @@ def write_intermediate_npz(
         "portrait_offset": [PX, PY],
         "bands": BANDS,
         "travellers": TRAVELLERS,
+        "traveller_states": ["portrait", "nextjs", "code", "vercel", "portrait"],
         "seed": SEED,
         "intro_seconds": INTRO_SECONDS,
         "loop_seconds": LOOP_SECONDS,
@@ -573,10 +600,10 @@ def build_svg(
             f'keyTimes="0;.47;1" repeatCount="indefinite"/>'
             f'<path d="{path}"/></g>'
         )
-    p0, react, code, vercel, p1 = travellers
+    p0, nextjs, code, vercel, p1 = travellers
     d_values = ";".join(
         dot_path(state)
-        for state in (p0, p0, react, react, code, code, vercel, vercel, p1)
+        for state in (p0, p0, nextjs, nextjs, code, code, vercel, vercel, p1)
     )
     info_rows = "".join(
         (
@@ -584,23 +611,21 @@ def build_svg(
             row_svg("Origin", PROFILE["Origin"], 238, t),
             row_svg("Education", PROFILE["Education"], 262, t),
             row_svg("Status", PROFILE["Status"], 286, t),
-            row_svg("ToolChain", PROFILE["ToolChain"], 330, t),
-            row_svg("Core.Lang", PROFILE["Core.Lang"], 354, t),
-            row_svg("Core.Frontend", PROFILE["Core.Frontend"], 378, t),
-            row_svg("Core.Backend", PROFILE["Core.Backend"], 402, t),
-            row_svg("Core.Database", PROFILE["Core.Database"], 426, t),
-            row_svg("Core.Infra", PROFILE["Core.Infra"], 450, t),
-            row_svg("Grid.Mail", PROFILE["Grid.Mail"], 494, t),
-            row_svg("Grid.Portfolio", PROFILE["Grid.Portfolio"], 518, t),
-            row_svg("Grid.Instagram", PROFILE["Grid.Instagram"], 542, t),
-            row_svg("Grid.GitHub", PROFILE["Grid.GitHub"], 566, t),
+            row_svg("ToolChain", PROFILE["ToolChain"], 338, t),
+            row_svg("Core.Lang", PROFILE["Core.Lang"], 366, t),
+            row_svg("Core.Frontend", PROFILE["Core.Frontend"], 394, t),
+            row_svg("Core.Database", PROFILE["Core.Database"], 422, t),
+            row_svg("Grid.Mail", PROFILE["Grid.Mail"], 486, t),
+            row_svg("Grid.Portfolio", PROFILE["Grid.Portfolio"], 510, t),
+            row_svg("Grid.Instagram", PROFILE["Grid.Instagram"], 534, t),
+            row_svg("Grid.GitHub", PROFILE["Grid.GitHub"], 558, t),
         )
     )
     dot_count = len(dots)
     svg = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-labelledby="title desc">
   <title id="title">Rubens Rafael — animated developer profile terminal</title>
-  <desc id="desc">Dithered portrait morphing into React, code, and Vercel symbols beside Rubens Rafael's developer profile.</desc>
+  <desc id="desc">Dithered portrait morphing into Next.js, code, and Vercel symbols beside Rubens Rafael's developer profile.</desc>
   <style>
     text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }}
     .micro {{ font-size: 10px; font-weight: 700; letter-spacing: 1.8px; fill: {t["muted"]}; }}
@@ -662,8 +687,8 @@ def build_svg(
   </g>
   {info_rows}
   <text x="506" y="308" class="micro">CORE.STACK / RUNTIME</text>
-  <text x="506" y="472" class="micro">GRID.CONTACT / ROUTES</text>
-  <path d="M506 314H1128M506 478H1128" stroke="{t["border"]}"/>
+  <text x="506" y="454" class="micro">GRID.CONTACT / ROUTES</text>
+  <path d="M506 314H1128M506 460H1128" stroke="{t["border"]}"/>
 </svg>
 '''
     return svg
@@ -700,11 +725,11 @@ def main() -> None:
         bands, sigma = band_map(dots)
         order, spatial, straight = choose_schedule(bands)
         p0 = evenly_sample(dots, TRAVELLERS)
-        react = greedy_nearest(p0, react_points(TRAVELLERS))
-        code = greedy_nearest(react, code_points(TRAVELLERS))
+        nextjs = greedy_nearest(p0, nextjs_points(TRAVELLERS))
+        code = greedy_nearest(nextjs, code_points(TRAVELLERS))
         vercel = greedy_nearest(code, vercel_points(TRAVELLERS))
         p1 = greedy_nearest(vercel, p0)
-        travellers = (p0, react, code, vercel, p1)
+        travellers = (p0, nextjs, code, vercel, p1)
         theme_intermediate[theme_name] = {
             "dots": dots,
             "bands": bands,
@@ -721,8 +746,8 @@ def main() -> None:
             "intro_spatial_evenness": round(spatial, 5),
             "straight_boundary_metric": round(straight, 5),
             "mean_travel_px": {
-                "portrait_to_react": round(movement_metric(p0, react), 3),
-                "react_to_code": round(movement_metric(react, code), 3),
+                "portrait_to_nextjs": round(movement_metric(p0, nextjs), 3),
+                "nextjs_to_code": round(movement_metric(nextjs, code), 3),
                 "code_to_vercel": round(movement_metric(code, vercel), 3),
                 "vercel_to_portrait": round(movement_metric(vercel, p1), 3),
             },

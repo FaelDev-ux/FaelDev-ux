@@ -26,8 +26,8 @@
   "source_sha256": "4cc5bcae3941aabb04ab9219b243af396cefea30d2c5f84418096f5a8e7d09d4",
   "intermediate": {
     "file": "portrait-data.npz",
-    "file_bytes": 105946,
-    "sha256": "b0ea4f6a8e0483c8dec0d0ccf5930b6a1ac8833676243d32998817f401bce792",
+    "file_bytes": 105011,
+    "sha256": "c824e64854444f2d8a11299ffb752d586a0a4494802142739dc9c9f1afd95c9b",
     "npz_valid": true,
     "members": [
       "subject_mask.npy",
@@ -48,12 +48,12 @@
       "intro_spatial_evenness": 0.0383,
       "straight_boundary_metric": 0.00306,
       "mean_travel_px": {
-        "portrait_to_react": 84.191,
-        "react_to_code": 40.625,
-        "code_to_vercel": 48.615,
-        "vercel_to_portrait": 93.381
+        "portrait_to_nextjs": 87.142,
+        "nextjs_to_code": 44.308,
+        "code_to_vercel": 46.431,
+        "vercel_to_portrait": 91.917
       },
-      "file_bytes": 486708,
+      "file_bytes": 485949,
       "xml_valid": true
     },
     "light": {
@@ -63,12 +63,12 @@
       "intro_spatial_evenness": 0.01924,
       "straight_boundary_metric": 0.00306,
       "mean_travel_px": {
-        "portrait_to_react": 71.56,
-        "react_to_code": 35.982,
-        "code_to_vercel": 46.699,
-        "vercel_to_portrait": 102.605
+        "portrait_to_nextjs": 78.342,
+        "nextjs_to_code": 44.478,
+        "code_to_vercel": 46.233,
+        "vercel_to_portrait": 100.766
       },
-      "file_bytes": 717701,
+      "file_bytes": 716942,
       "xml_valid": true
     }
   }
