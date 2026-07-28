@@ -20,14 +20,10 @@ Desenvolvo experiências digitais do front-end ao back-end, com interfaces bem r
 
 <div align="center">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-0A101F?style=for-the-badge&logo=nextdotjs&logoColor=22D3EE">
-  <img alt="React" src="https://img.shields.io/badge/React-0A101F?style=for-the-badge&logo=react&logoColor=22D3EE">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-0A101F?style=for-the-badge&logo=typescript&logoColor=A78BFA">
   <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-0A101F?style=for-the-badge&logo=javascript&logoColor=10B981">
   <img alt="Python" src="https://img.shields.io/badge/Python-0A101F?style=for-the-badge&logo=python&logoColor=A78BFA">
-  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0A101F?style=for-the-badge&logo=fastapi&logoColor=10B981">
   <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-0A101F?style=for-the-badge&logo=tailwindcss&logoColor=22D3EE">
   <img alt="Supabase" src="https://img.shields.io/badge/Supabase-0A101F?style=for-the-badge&logo=supabase&logoColor=10B981">
-  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-0A101F?style=for-the-badge&logo=postgresql&logoColor=A78BFA">
   <img alt="Vercel" src="https://img.shields.io/badge/Vercel-0A101F?style=for-the-badge&logo=vercel&logoColor=22D3EE">
   <img alt="Git" src="https://img.shields.io/badge/Git-0A101F?style=for-the-badge&logo=git&logoColor=10B981">
 </div>
