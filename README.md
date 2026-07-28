@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FaelDev-ux/FaelDev-ux/main/dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/FaelDev-ux/FaelDev-ux/main/light.svg">
-    <img width="100%" alt="Rubens Rafael — desenvolvedor full stack" src="https://raw.githubusercontent.com/FaelDev-ux/FaelDev-ux/main/light.svg">
+    <img width="100%" alt="Rubens Rafael — desenvolvedor front-end" src="https://raw.githubusercontent.com/FaelDev-ux/FaelDev-ux/main/light.svg">
   </picture>
 </div>
 
