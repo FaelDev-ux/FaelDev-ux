@@ -14,7 +14,7 @@ rubens@r2labss:~$ mission
 Transformar problemas em produtos web claros, rápidos e úteis.
 ```
 
-Desenvolvo experiências digitais do front-end ao back-end, com interfaces bem resolvidas, integrações confiáveis e atenção ao que gera valor para quem usa. Gosto de entender o problema antes de escrever código e de evoluir cada entrega com aprendizado prático.
+Desenvolvo experiências digitais, com interfaces bem resolvidas, integrações confiáveis e atenção ao que gera valor para quem usa. Gosto de entender o problema antes de escrever código e de evoluir cada entrega com aprendizado prático.
 
 ## Tecnologias
 
