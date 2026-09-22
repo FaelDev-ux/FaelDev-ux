@@ -39,7 +39,7 @@ PW, PH = 300, 340
 PX, PY = 74, 164
 BANDS = 94
 TRAVELLERS = 3600
-PARTICLE_SIZE = 1.9
+PARTICLE_SIZE = 2.8
 INTRO_GROUPS = 60
 INTRO_SECONDS = 3.2
 SEED = 24072003
@@ -532,13 +532,9 @@ def greedy_nearest(
     return matched
 
 
-def dot_path(points: list[tuple[float, float]], size: float = PARTICLE_SIZE) -> str:
-    chunks = []
-    s = f"{size:.2f}".rstrip("0").rstrip(".")
-    neg = f"{-size:.2f}".rstrip("0").rstrip(".")
-    for x, y in points:
-        chunks.append(f"M{x:.1f} {y:.1f}h{s}v{s}h{neg}z")
-    return "".join(chunks)
+def dot_path(points: list[tuple[float, float]]) -> str:
+    """Create tiny round-capped segments that render as circular particles."""
+    return "".join(f"M{x:.1f} {y:.1f}h.01" for x, y in points)
 
 
 def npy_bytes(values: list[int] | list[float], shape: tuple[int, ...], descr: str) -> bytes:
@@ -729,7 +725,7 @@ def build_svg(
         "vercel": t["portrait"],
         **TECH_COLORS,
     }
-    fill_values = ";".join(
+    particle_color_values = ";".join(
         color
         for state_name in DISPLAY_STATES
         for color in (state_colors[state_name], state_colors[state_name])
@@ -786,19 +782,20 @@ def build_svg(
   <rect x="54" y="144" width="340" height="380" rx="12" fill="{t["panel2"]}" stroke="{t["border"]}"/>
   <path d="M62 155h16M62 155v16M386 155h-16M386 155v16M62 513h16M62 513v-16M386 513h-16M386 513v-16"
         stroke="{t["chrome"]}" stroke-width="1.2" fill="none" opacity=".8"/>
-  <g transform="translate({PX} {PY})" fill="{t["portrait"]}" shape-rendering="crispEdges">
-    <g>
+  <g transform="translate({PX} {PY})" fill="{t["portrait"]}">
+    <g shape-rendering="crispEdges">
       <animate attributeName="opacity" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
         values="{band_opacity_values}" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
       {''.join(band_chunks)}
     </g>
-    <path d="{dot_path(travellers[0])}" opacity=".16">
+    <path d="{dot_path(travellers[0])}" opacity=".16" fill="none"
+          stroke="{t["portrait"]}" stroke-width="{PARTICLE_SIZE}" stroke-linecap="round">
       <animate attributeName="d" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
         values="{d_values}" keyTimes="{KEY_TIMES}" calcMode="linear" repeatCount="indefinite"/>
       <animate attributeName="opacity" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
         values="{particle_opacity_values}" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
-      <animate attributeName="fill" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
-        values="{fill_values}" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
+      <animate attributeName="stroke" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
+        values="{particle_color_values}" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
     </path>
   </g>
   <rect x="68" y="533" width="312" height="25" rx="12.5" fill="{t["panel2"]}" stroke="{t["border"]}"/>

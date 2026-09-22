@@ -9,7 +9,7 @@
   ],
   "bands": 94,
   "traveller_dots": 3600,
-  "particle_size": 1.9,
+  "particle_size": 2.8,
   "python_loop_source": "procedural-complete-mark",
   "intro_groups": 60,
   "intro_seconds": 3.2,
@@ -82,7 +82,7 @@
         "python_to_supabase": 21.822,
         "supabase_to_portrait": 90.419
       },
-      "file_bytes": 2322105,
+      "file_bytes": 1530188,
       "xml_valid": true
     },
     "light": {
@@ -103,7 +103,7 @@
         "python_to_supabase": 21.802,
         "supabase_to_portrait": 85.165
       },
-      "file_bytes": 2551446,
+      "file_bytes": 1759529,
       "xml_valid": true
     }
   }
