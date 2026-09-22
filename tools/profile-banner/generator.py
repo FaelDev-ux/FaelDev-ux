@@ -2,7 +2,7 @@
 """Reproducible GitHub-profile terminal banner generator.
 
 Source of truth:
-  - assets/portrait-source.jpg
+  - assets/legacy-portrait-data.npz
   - assets/* technology logos
   - this file
 
@@ -11,15 +11,14 @@ Outputs:
   - metrics.json
   - portrait-data.npz
 
-The portrait pipeline follows the supplied brief: 300x340 crop, autocontrast
-cutoff 1, contrast 1.3, UnsharpMask(3, 140), serpentine Floyd-Steinberg, and
-compact crisp SVG runs. A deterministic silhouette mask isolates the subject
-from the outdoor avatar background in both color themes.
+The legacy portrait point map is preserved exactly. Its particles morph through
+the original symbols and the supplied technology logos in one continuous loop.
 """
 
 from __future__ import annotations
 
 import argparse
+import ast
 import base64
 import hashlib
 import io
@@ -29,11 +28,10 @@ import random
 import statistics
 import struct
 import zipfile
-from collections import deque
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image
 
 
 W, H = 1180, 610
@@ -43,9 +41,40 @@ BANDS = 94
 TRAVELLERS = 900
 INTRO_GROUPS = 60
 INTRO_SECONDS = 3.2
-LOOP_SECONDS = 14.2
 SEED = 24072003
-KEY_TIMES = "0;0.21127;0.30282;0.44366;0.53521;0.67606;0.76761;0.90845;1"
+HOLD_SECONDS = 1.4
+TRANSITION_SECONDS = 0.8
+
+TRAVELLER_STATES = (
+    "portrait",
+    "nextjs",
+    "code",
+    "vercel",
+    "javascript",
+    "typescript",
+    "react",
+    "tailwind",
+    "python",
+    "supabase",
+    "portrait",
+)
+DISPLAY_STATES = TRAVELLER_STATES[:-1]
+LOOP_SECONDS = len(DISPLAY_STATES) * (HOLD_SECONDS + TRANSITION_SECONDS)
+
+
+def animation_key_times() -> tuple[float, ...]:
+    elapsed = 0.0
+    times = [0.0]
+    for _ in DISPLAY_STATES:
+        elapsed += HOLD_SECONDS
+        times.append(elapsed / LOOP_SECONDS)
+        elapsed += TRANSITION_SECONDS
+        times.append(elapsed / LOOP_SECONDS)
+    return tuple(round(value, 6) for value in times)
+
+
+KEY_TIME_VALUES = animation_key_times()
+KEY_TIMES = ";".join(f"{value:.6f}".rstrip("0").rstrip(".") for value in KEY_TIME_VALUES)
 
 TECHNOLOGIES = (
     ("JavaScript", "javascript.png", "image/png"),
@@ -55,6 +84,24 @@ TECHNOLOGIES = (
     ("Python", "python.jpeg", "image/jpeg"),
     ("Supabase", "supabase.jpeg", "image/jpeg"),
 )
+
+TECH_LOOP = (
+    ("javascript", "javascript.png"),
+    ("typescript", "typescript.webp"),
+    ("react", "react.png"),
+    ("tailwind", "tailwind.png"),
+    ("python", "python.jpeg"),
+    ("supabase", "supabase.jpeg"),
+)
+
+TECH_COLORS = {
+    "javascript": "#F7DF1E",
+    "typescript": "#3178C6",
+    "react": "#61DAFB",
+    "tailwind": "#38BDF8",
+    "python": "#3776AB",
+    "supabase": "#3ECF8E",
+}
 
 PROFILE = {
     "Subject": "RUBENS.RAFAEL",
@@ -115,166 +162,71 @@ def esc(text: object) -> str:
     )
 
 
-def crop_portrait(source: Image.Image) -> Image.Image:
-    """Crop the current avatar around the face and upper body."""
-    source = source.convert("RGB")
-    width, height = source.size
-    source = source.crop(
-        (
-            round(width * 0.174),
-            0,
-            round(width * 0.826),
-            round(height * 0.739),
-        )
-    )
-    return ImageOps.fit(
-        source,
-        (PW, PH),
-        method=Image.Resampling.LANCZOS,
-        centering=(0.5, 0.5),
-    )
+def read_npy_u1(blob: bytes) -> tuple[tuple[int, ...], bytes]:
+    """Read the uint8 NumPy payloads stored in the legacy portrait archive."""
+    if not blob.startswith(b"\x93NUMPY"):
+        raise ValueError("Invalid NPY payload")
+    major = blob[6]
+    if major == 1:
+        header_len = struct.unpack("<H", blob[8:10])[0]
+        header_start = 10
+    elif major in (2, 3):
+        header_len = struct.unpack("<I", blob[8:12])[0]
+        header_start = 12
+    else:
+        raise ValueError(f"Unsupported NPY version: {major}")
+    header_end = header_start + header_len
+    header = ast.literal_eval(blob[header_start:header_end].decode("latin1").strip())
+    if header["descr"] != "|u1" or header["fortran_order"]:
+        raise ValueError("Expected a row-major uint8 NPY payload")
+    return tuple(header["shape"]), blob[header_end:]
 
 
-def portrait_subject_mask() -> list[list[bool]]:
-    """Deterministic silhouette mask tailored to the public profile portrait."""
-    mask = Image.new("L", (PW, PH), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.ellipse((126, 18, 205, 105), fill=255)
-    draw.rectangle((145, 88, 189, 118), fill=255)
-    draw.polygon(
-        (
-            (128, 98),
-            (113, 118),
-            (106, 218),
-            (108, 339),
-            (219, 339),
-            (219, 218),
-            (213, 118),
-            (195, 98),
-        ),
-        fill=255,
-    )
-    return [[mask.getpixel((x, y)) >= 128 for x in range(PW)] for y in range(PH)]
-
-
-def prepared_density(crop: Image.Image) -> Image.Image:
-    gray = ImageOps.grayscale(crop)
-    gray = ImageOps.autocontrast(gray, cutoff=1)
-    gray = ImageEnhance.Contrast(gray).enhance(1.3)
-    gray = gray.filter(ImageFilter.UnsharpMask(radius=3, percent=140, threshold=2))
-    return gray
-
-
-def fill_holes(bits: list[list[bool]]) -> list[list[bool]]:
-    h, w = len(bits), len(bits[0])
-    seen = [[False] * w for _ in range(h)]
-    q: deque[tuple[int, int]] = deque()
-    for x in range(w):
-        if not bits[0][x]:
-            seen[0][x] = True
-            q.append((x, 0))
-        if not bits[h - 1][x]:
-            seen[h - 1][x] = True
-            q.append((x, h - 1))
-    for y in range(h):
-        if not bits[y][0] and not seen[y][0]:
-            seen[y][0] = True
-            q.append((0, y))
-        if not bits[y][w - 1] and not seen[y][w - 1]:
-            seen[y][w - 1] = True
-            q.append((w - 1, y))
-    while q:
-        x, y = q.popleft()
-        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
-            if 0 <= nx < w and 0 <= ny < h and not bits[ny][nx] and not seen[ny][nx]:
-                seen[ny][nx] = True
-                q.append((nx, ny))
-    return [[bits[y][x] or not seen[y][x] for x in range(w)] for y in range(h)]
-
-
-def largest_component(bits: list[list[bool]]) -> list[list[bool]]:
-    h, w = len(bits), len(bits[0])
-    seen = [[False] * w for _ in range(h)]
-    best: list[tuple[int, int]] = []
-    for y in range(h):
-        for x in range(w):
-            if not bits[y][x] or seen[y][x]:
-                continue
-            q = [(x, y)]
-            seen[y][x] = True
-            comp: list[tuple[int, int]] = []
-            for cx, cy in q:
-                comp.append((cx, cy))
-                for nx, ny in (
-                    (cx - 1, cy),
-                    (cx + 1, cy),
-                    (cx, cy - 1),
-                    (cx, cy + 1),
-                ):
-                    if 0 <= nx < w and 0 <= ny < h and bits[ny][nx] and not seen[ny][nx]:
-                        seen[ny][nx] = True
-                        q.append((nx, ny))
-            if len(comp) > len(best):
-                best = comp
-    out = [[False] * w for _ in range(h)]
-    for x, y in best:
-        out[y][x] = True
-    return out
-
-
-def dark_subject_mask(crop: Image.Image) -> list[list[bool]]:
-    """Reject neutral mid-tone studio background, then close/fill/select subject."""
-    px = crop.load()
-    raw = Image.new("L", (PW, PH), 0)
-    out = raw.load()
-    for y in range(PH):
-        for x in range(PW):
-            r, g, b = px[x, y]
-            hi, lo = max(r, g, b), min(r, g, b)
-            sat = hi - lo
-            lum = (54 * r + 183 * g + 19 * b) >> 8
-            # Studio background is neutral and mostly in this middle range.
-            foreground = sat >= 13 or lum <= 37 or lum >= 79
-            out[x, y] = 255 if foreground else 0
-    # Binary closing: dilation then erosion.
-    closed = raw.filter(ImageFilter.MaxFilter(9)).filter(ImageFilter.MinFilter(9))
-    bits = [[closed.getpixel((x, y)) >= 128 for x in range(PW)] for y in range(PH)]
-    bits = fill_holes(bits)
-    bits = largest_component(bits)
-    return bits
-
-
-def floyd_steinberg(
-    density: Image.Image, mask: list[list[bool]] | None
-) -> list[tuple[int, int]]:
-    """1-bit serpentine Floyd-Steinberg error diffusion."""
-    rows = [
-        [float(v) for v in density.crop((0, y, PW, y + 1)).get_flattened_data()]
+def load_legacy_grid(archive_path: Path, member: str) -> list[list[bool]]:
+    with zipfile.ZipFile(archive_path) as archive:
+        shape, payload = read_npy_u1(archive.read(member))
+    if shape != (PH, PW) or len(payload) != PW * PH:
+        raise ValueError(f"Unexpected legacy portrait grid: {member} {shape}")
+    return [
+        [bool(payload[y * PW + x]) for x in range(PW)]
         for y in range(PH)
     ]
-    if mask is not None:
-        for y in range(PH):
-            for x in range(PW):
-                if not mask[y][x]:
-                    rows[y][x] = 0.0
-    dots: list[tuple[int, int]] = []
-    for y in range(PH):
-        forward = (y % 2) == 0
-        xs = range(PW) if forward else range(PW - 1, -1, -1)
-        for x in xs:
-            old = max(0.0, min(255.0, rows[y][x]))
-            new = 255.0 if old >= 127.5 else 0.0
-            if new:
-                dots.append((x, y))
-            err = old - new
-            if forward:
-                nbrs = ((x + 1, y, 7), (x - 1, y + 1, 3), (x, y + 1, 5), (x + 1, y + 1, 1))
-            else:
-                nbrs = ((x - 1, y, 7), (x + 1, y + 1, 3), (x, y + 1, 5), (x - 1, y + 1, 1))
-            for nx, ny, weight in nbrs:
-                if 0 <= nx < PW and 0 <= ny < PH:
-                    rows[ny][nx] += err * weight / 16.0
-    return dots
+
+
+def load_legacy_portrait_points(
+    archive_path: Path, theme_name: str
+) -> list[tuple[int, int]]:
+    grid = load_legacy_grid(archive_path, f"{theme_name}_dither.npy")
+    return [(x, y) for y, row in enumerate(grid) for x, value in enumerate(row) if value]
+
+
+def technology_logo_points(path: Path, n: int) -> list[tuple[float, float]]:
+    """Convert a supplied color logo into a centered particle silhouette."""
+    source = Image.open(path).convert("RGBA")
+    mask = Image.new("L", source.size, 0)
+    mask_pixels = mask.load()
+    source_pixels = source.load()
+    for y in range(source.height):
+        for x in range(source.width):
+            red, green, blue, alpha = source_pixels[x, y]
+            saturation = max(red, green, blue) - min(red, green, blue)
+            if alpha >= 32 and saturation >= 32 and max(red, green, blue) >= 56:
+                mask_pixels[x, y] = 255
+
+    bbox = mask.getbbox()
+    if bbox is None:
+        raise ValueError(f"No colored logo pixels found in {path}")
+    logo = mask.crop(bbox)
+    logo.thumbnail((230, 230), Image.Resampling.LANCZOS)
+    canvas = Image.new("L", (PW, PH), 0)
+    canvas.paste(logo, ((PW - logo.width) // 2, (PH - logo.height) // 2))
+    points = [
+        (x, y)
+        for y in range(PH)
+        for x in range(PW)
+        if canvas.getpixel((x, y)) >= 96
+    ]
+    return evenly_sample(points, n)
 
 
 def band_map(dots: list[tuple[int, int]]) -> tuple[list[list[tuple[int, int]]], float]:
@@ -555,7 +507,7 @@ def write_intermediate_npz(
             band_grid, (PH, PW), "<i2"
         )
         entries[f"{theme_name}_travellers.npy"] = npy_bytes(
-            flat_travellers, (5, TRAVELLERS, 2), "<f4"
+            flat_travellers, (len(travellers), TRAVELLERS, 2), "<f4"
         )
     metadata = {
         "canvas": [W, H],
@@ -563,11 +515,11 @@ def write_intermediate_npz(
         "portrait_offset": [PX, PY],
         "bands": BANDS,
         "travellers": TRAVELLERS,
-        "traveller_states": ["portrait", "nextjs", "code", "vercel", "portrait"],
+        "traveller_states": list(TRAVELLER_STATES),
         "seed": SEED,
         "intro_seconds": INTRO_SECONDS,
         "loop_seconds": LOOP_SECONDS,
-        "key_times": [float(x) for x in KEY_TIMES.split(";")],
+        "key_times": list(KEY_TIME_VALUES),
     }
     entries["metadata.json"] = (
         json.dumps(metadata, sort_keys=True, separators=(",", ":")) + "\n"
@@ -644,13 +596,7 @@ def build_svg(
     dots: list[tuple[int, int]],
     bands: list[list[tuple[int, int]]],
     order: list[int],
-    travellers: tuple[
-        list[tuple[float, float]],
-        list[tuple[float, float]],
-        list[tuple[float, float]],
-        list[tuple[float, float]],
-        list[tuple[float, float]],
-    ],
+    travellers: list[list[tuple[float, float]]],
     technologies: list[tuple[str, str]],
 ) -> str:
     t = THEMES[theme_name]
@@ -674,11 +620,34 @@ def build_svg(
             f'keyTimes="0;.47;1" repeatCount="indefinite"/>'
             f'<path d="{path}"/></g>'
         )
-    p0, nextjs, code, vercel, p1 = travellers
-    d_values = ";".join(
-        dot_path(state)
-        for state in (p0, p0, nextjs, nextjs, code, code, vercel, vercel, p1)
-    )
+    animation_states = [
+        state
+        for state in travellers[:-1]
+        for _ in range(2)
+    ] + [travellers[-1]]
+    d_values = ";".join(dot_path(state) for state in animation_states)
+    band_opacity_values = ";".join(
+        value
+        for state_name in DISPLAY_STATES
+        for value in (("1", "1") if state_name == "portrait" else ("0", "0"))
+    ) + ";1"
+    particle_opacity_values = ";".join(
+        value
+        for state_name in DISPLAY_STATES
+        for value in ((".16", ".16") if state_name == "portrait" else (".96", ".96"))
+    ) + ";.16"
+    state_colors = {
+        "portrait": t["portrait"],
+        "nextjs": t["portrait"],
+        "code": t["portrait"],
+        "vercel": t["portrait"],
+        **TECH_COLORS,
+    }
+    fill_values = ";".join(
+        color
+        for state_name in DISPLAY_STATES
+        for color in (state_colors[state_name], state_colors[state_name])
+    ) + f';{t["portrait"]}'
     info_rows = "".join(
         (
             row_svg("Role", PROFILE["Role"], 214, t),
@@ -697,7 +666,7 @@ def build_svg(
     svg = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-labelledby="title desc">
   <title id="title">Rubens Rafael — animated developer profile terminal</title>
-  <desc id="desc">Updated dithered portrait and technology cards for JavaScript, TypeScript, React, Tailwind CSS, Python, and Supabase beside Rubens Rafael's developer profile.</desc>
+  <desc id="desc">The original dithered portrait morphs through developer symbols and JavaScript, TypeScript, React, Tailwind CSS, Python, and Supabase logos beside Rubens Rafael's developer profile.</desc>
   <style>
     text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }}
     .micro {{ font-size: 10px; font-weight: 700; letter-spacing: 1.8px; fill: {t["muted"]}; }}
@@ -734,14 +703,16 @@ def build_svg(
   <g transform="translate({PX} {PY})" fill="{t["portrait"]}" shape-rendering="crispEdges">
     <g>
       <animate attributeName="opacity" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
-        values="1;1;0;0;0;0;0;0;1" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
+        values="{band_opacity_values}" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
       {''.join(band_chunks)}
     </g>
-    <path d="{dot_path(p0)}" opacity=".16">
+    <path d="{dot_path(travellers[0])}" opacity=".16">
       <animate attributeName="d" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
         values="{d_values}" keyTimes="{KEY_TIMES}" calcMode="linear" repeatCount="indefinite"/>
       <animate attributeName="opacity" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
-        values=".16;.16;.96;.96;.96;.96;.96;.96;.16" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
+        values="{particle_opacity_values}" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
+      <animate attributeName="fill" begin="{INTRO_SECONDS}s" dur="{LOOP_SECONDS}s"
+        values="{fill_values}" keyTimes="{KEY_TIMES}" repeatCount="indefinite"/>
     </path>
   </g>
   <rect x="68" y="533" width="312" height="25" rx="12.5" fill="{t["panel2"]}" stroke="{t["border"]}"/>
@@ -771,21 +742,24 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     default_assets = Path(__file__).with_name("assets")
     parser.add_argument(
-        "--source", type=Path, default=default_assets / "portrait-source.jpg"
+        "--portrait-data",
+        type=Path,
+        default=default_assets / "legacy-portrait-data.npz",
     )
     parser.add_argument("--assets-dir", type=Path, default=default_assets)
     parser.add_argument("--output-dir", type=Path, default=Path(__file__).parent)
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    source = Image.open(args.source)
-    crop = crop_portrait(source)
-    density = prepared_density(crop)
-    mask = portrait_subject_mask()
+    mask = load_legacy_grid(args.portrait_data, "subject_mask.npy")
     technologies = [
         (name, image_data_uri(args.assets_dir / filename, mime_type))
         for name, filename, mime_type in TECHNOLOGIES
     ]
+    logo_targets = {
+        state_name: technology_logo_points(args.assets_dir / filename, TRAVELLERS)
+        for state_name, filename in TECH_LOOP
+    }
 
     theme_data = {}
     all_metrics: dict[str, object] = {
@@ -796,8 +770,9 @@ def main() -> None:
         "intro_groups": INTRO_GROUPS,
         "intro_seconds": INTRO_SECONDS,
         "loop_seconds": LOOP_SECONDS,
-        "key_times": [float(x) for x in KEY_TIMES.split(";")],
-        "source_sha256": hashlib.sha256(args.source.read_bytes()).hexdigest(),
+        "key_times": list(KEY_TIME_VALUES),
+        "portrait_source": args.portrait_data.name,
+        "source_sha256": hashlib.sha256(args.portrait_data.read_bytes()).hexdigest(),
         "technology_assets_sha256": {
             filename: hashlib.sha256((args.assets_dir / filename).read_bytes()).hexdigest()
             for _, filename, _ in TECHNOLOGIES
@@ -806,15 +781,23 @@ def main() -> None:
     theme_intermediate: dict[str, dict[str, object]] = {}
 
     for theme_name in ("dark", "light"):
-        dots = floyd_steinberg(density, mask)
+        dots = load_legacy_portrait_points(args.portrait_data, theme_name)
         bands, sigma = band_map(dots)
         order, spatial, straight = choose_schedule(bands)
         p0 = evenly_sample(dots, TRAVELLERS)
-        nextjs = greedy_nearest(p0, nextjs_points(TRAVELLERS))
-        code = greedy_nearest(nextjs, code_points(TRAVELLERS))
-        vercel = greedy_nearest(code, vercel_points(TRAVELLERS))
-        p1 = greedy_nearest(vercel, p0)
-        travellers = (p0, nextjs, code, vercel, p1)
+        targets = (
+            ("nextjs", nextjs_points(TRAVELLERS)),
+            ("code", code_points(TRAVELLERS)),
+            ("vercel", vercel_points(TRAVELLERS)),
+            *((state_name, logo_targets[state_name]) for state_name, _ in TECH_LOOP),
+        )
+        travellers = [p0]
+        current = p0
+        for _, target in targets:
+            current = greedy_nearest(current, target)
+            travellers.append(current)
+        travellers.append(greedy_nearest(current, p0))
+        assert len(travellers) == len(TRAVELLER_STATES)
         theme_intermediate[theme_name] = {
             "dots": dots,
             "bands": bands,
@@ -826,15 +809,22 @@ def main() -> None:
         ET.parse(out)
         theme_data[theme_name] = {
             "dot_count": len(dots),
-            "foreground_mask_pixels": sum(sum(row) for row in mask),
+            "foreground_mask_pixels": (
+                sum(sum(row) for row in mask) if theme_name == "dark" else PW * PH
+            ),
             "noise_sigma": round(sigma, 4),
             "intro_spatial_evenness": round(spatial, 5),
             "straight_boundary_metric": round(straight, 5),
             "mean_travel_px": {
-                "portrait_to_nextjs": round(movement_metric(p0, nextjs), 3),
-                "nextjs_to_code": round(movement_metric(nextjs, code), 3),
-                "code_to_vercel": round(movement_metric(code, vercel), 3),
-                "vercel_to_portrait": round(movement_metric(vercel, p1), 3),
+                f"{source_name}_to_{target_name}": round(
+                    movement_metric(source_points, target_points), 3
+                )
+                for source_name, target_name, source_points, target_points in zip(
+                    TRAVELLER_STATES,
+                    TRAVELLER_STATES[1:],
+                    travellers,
+                    travellers[1:],
+                )
             },
             "file_bytes": out.stat().st_size,
             "xml_valid": True,
