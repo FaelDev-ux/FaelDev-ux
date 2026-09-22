@@ -2,7 +2,8 @@
 """Reproducible GitHub-profile terminal banner generator.
 
 Source of truth:
-  - portrait-source.png
+  - assets/portrait-source.jpg
+  - assets/* technology logos
   - this file
 
 Outputs:
@@ -12,14 +13,14 @@ Outputs:
 
 The portrait pipeline follows the supplied brief: 300x340 crop, autocontrast
 cutoff 1, contrast 1.3, UnsharpMask(3, 140), serpentine Floyd-Steinberg, and
-compact crisp SVG runs.  The dark treatment additionally builds a hard subject
-mask using background rejection, morphological closing, hole filling, and
-largest-component selection.
+compact crisp SVG runs. A deterministic silhouette mask isolates the subject
+from the outdoor avatar background in both color themes.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import io
 import json
@@ -32,7 +33,7 @@ from collections import deque
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 
 
 W, H = 1180, 610
@@ -45,6 +46,15 @@ INTRO_SECONDS = 3.2
 LOOP_SECONDS = 14.2
 SEED = 24072003
 KEY_TIMES = "0;0.21127;0.30282;0.44366;0.53521;0.67606;0.76761;0.90845;1"
+
+TECHNOLOGIES = (
+    ("JavaScript", "javascript.png", "image/png"),
+    ("TypeScript", "typescript.webp", "image/webp"),
+    ("React", "react.png", "image/png"),
+    ("Tailwind CSS", "tailwind.png", "image/png"),
+    ("Python", "python.jpeg", "image/jpeg"),
+    ("Supabase", "supabase.jpeg", "image/jpeg"),
+)
 
 PROFILE = {
     "Subject": "RUBENS.RAFAEL",
@@ -106,14 +116,45 @@ def esc(text: object) -> str:
 
 
 def crop_portrait(source: Image.Image) -> Image.Image:
-    """Crop around the face/upper torso to the exact 300x340 map."""
+    """Crop the current avatar around the face and upper body."""
     source = source.convert("RGB")
+    width, height = source.size
+    source = source.crop(
+        (
+            round(width * 0.174),
+            0,
+            round(width * 0.826),
+            round(height * 0.739),
+        )
+    )
     return ImageOps.fit(
         source,
         (PW, PH),
         method=Image.Resampling.LANCZOS,
-        centering=(0.5, 0.38),
+        centering=(0.5, 0.5),
     )
+
+
+def portrait_subject_mask() -> list[list[bool]]:
+    """Deterministic silhouette mask tailored to the public profile portrait."""
+    mask = Image.new("L", (PW, PH), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((126, 18, 205, 105), fill=255)
+    draw.rectangle((145, 88, 189, 118), fill=255)
+    draw.polygon(
+        (
+            (128, 98),
+            (113, 118),
+            (106, 218),
+            (108, 339),
+            (219, 339),
+            (219, 218),
+            (213, 118),
+            (195, 98),
+        ),
+        fill=255,
+    )
+    return [[mask.getpixel((x, y)) >= 128 for x in range(PW)] for y in range(PH)]
 
 
 def prepared_density(crop: Image.Image) -> Image.Image:
@@ -121,7 +162,7 @@ def prepared_density(crop: Image.Image) -> Image.Image:
     gray = ImageOps.autocontrast(gray, cutoff=1)
     gray = ImageEnhance.Contrast(gray).enhance(1.3)
     gray = gray.filter(ImageFilter.UnsharpMask(radius=3, percent=140, threshold=2))
-    return ImageOps.invert(gray)
+    return gray
 
 
 def fill_holes(bits: list[list[bool]]) -> list[list[bool]]:
@@ -207,7 +248,10 @@ def floyd_steinberg(
     density: Image.Image, mask: list[list[bool]] | None
 ) -> list[tuple[int, int]]:
     """1-bit serpentine Floyd-Steinberg error diffusion."""
-    rows = [[float(v) for v in density.crop((0, y, PW, y + 1)).getdata()] for y in range(PH)]
+    rows = [
+        [float(v) for v in density.crop((0, y, PW, y + 1)).get_flattened_data()]
+        for y in range(PH)
+    ]
     if mask is not None:
         for y in range(PH):
             for x in range(PW):
@@ -566,6 +610,35 @@ def row_svg(label: str, value: str, y: int, t: dict[str, str], x: int = 506, wid
     )
 
 
+def image_data_uri(path: Path, mime_type: str) -> str:
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def technology_cards_svg(
+    theme: dict[str, str], technologies: list[tuple[str, str]]
+) -> str:
+    cards: list[str] = []
+    for index, (name, uri) in enumerate(technologies):
+        column = index % 3
+        row = index // 3
+        x = 506 + column * 211
+        y = 326 + row * 46
+        cards.append(
+            f'<g transform="translate({x} {y})">'
+            f'<title>{esc(name)}</title>'
+            f'<rect width="200" height="38" rx="9" fill="{theme["panel2"]}" '
+            f'stroke="{theme["border"]}"/>'
+            f'<rect x="6" y="5" width="28" height="28" rx="6" fill="#FFFFFF"/>'
+            f'<image x="8" y="7" width="24" height="24" href="{uri}" '
+            f'preserveAspectRatio="xMidYMid meet"/>'
+            f'<text x="44" y="24" font-size="11.5" font-weight="750" '
+            f'fill="{theme["text"]}">{esc(name)}</text>'
+            f'</g>'
+        )
+    return "".join(cards)
+
+
 def build_svg(
     theme_name: str,
     dots: list[tuple[int, int]],
@@ -578,6 +651,7 @@ def build_svg(
         list[tuple[float, float]],
         list[tuple[float, float]],
     ],
+    technologies: list[tuple[str, str]],
 ) -> str:
     t = THEMES[theme_name]
     rank = [0] * BANDS
@@ -611,21 +685,19 @@ def build_svg(
             row_svg("Origin", PROFILE["Origin"], 238, t),
             row_svg("Education", PROFILE["Education"], 262, t),
             row_svg("Status", PROFILE["Status"], 286, t),
-            row_svg("ToolChain", PROFILE["ToolChain"], 338, t),
-            row_svg("Core.Lang", PROFILE["Core.Lang"], 366, t),
-            row_svg("Core.Frontend", PROFILE["Core.Frontend"], 394, t),
-            row_svg("Core.Database", PROFILE["Core.Database"], 422, t),
+            row_svg("ToolChain", PROFILE["ToolChain"], 430, t),
             row_svg("Grid.Mail", PROFILE["Grid.Mail"], 486, t),
             row_svg("Grid.Portfolio", PROFILE["Grid.Portfolio"], 510, t),
             row_svg("Grid.Instagram", PROFILE["Grid.Instagram"], 534, t),
             row_svg("Grid.GitHub", PROFILE["Grid.GitHub"], 558, t),
         )
     )
+    technology_cards = technology_cards_svg(t, technologies)
     dot_count = len(dots)
     svg = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-labelledby="title desc">
   <title id="title">Rubens Rafael — animated developer profile terminal</title>
-  <desc id="desc">Dithered portrait morphing into Next.js, code, and Vercel symbols beside Rubens Rafael's developer profile.</desc>
+  <desc id="desc">Updated dithered portrait and technology cards for JavaScript, TypeScript, React, Tailwind CSS, Python, and Supabase beside Rubens Rafael's developer profile.</desc>
   <style>
     text {{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }}
     .micro {{ font-size: 10px; font-weight: 700; letter-spacing: 1.8px; fill: {t["muted"]}; }}
@@ -686,6 +758,7 @@ def build_svg(
           textLength="132" lengthAdjust="spacingAndGlyphs">{PROFILE["Handle"]}</text>
   </g>
   {info_rows}
+  {technology_cards}
   <text x="506" y="308" class="micro">CORE.STACK / RUNTIME</text>
   <text x="506" y="454" class="micro">GRID.CONTACT / ROUTES</text>
   <path d="M506 314H1128M506 460H1128" stroke="{t["border"]}"/>
@@ -696,7 +769,11 @@ def build_svg(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source", type=Path, default=Path(__file__).with_name("portrait-source.png"))
+    default_assets = Path(__file__).with_name("assets")
+    parser.add_argument(
+        "--source", type=Path, default=default_assets / "portrait-source.jpg"
+    )
+    parser.add_argument("--assets-dir", type=Path, default=default_assets)
     parser.add_argument("--output-dir", type=Path, default=Path(__file__).parent)
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -704,7 +781,11 @@ def main() -> None:
     source = Image.open(args.source)
     crop = crop_portrait(source)
     density = prepared_density(crop)
-    mask = dark_subject_mask(crop)
+    mask = portrait_subject_mask()
+    technologies = [
+        (name, image_data_uri(args.assets_dir / filename, mime_type))
+        for name, filename, mime_type in TECHNOLOGIES
+    ]
 
     theme_data = {}
     all_metrics: dict[str, object] = {
@@ -717,11 +798,15 @@ def main() -> None:
         "loop_seconds": LOOP_SECONDS,
         "key_times": [float(x) for x in KEY_TIMES.split(";")],
         "source_sha256": hashlib.sha256(args.source.read_bytes()).hexdigest(),
+        "technology_assets_sha256": {
+            filename: hashlib.sha256((args.assets_dir / filename).read_bytes()).hexdigest()
+            for _, filename, _ in TECHNOLOGIES
+        },
     }
     theme_intermediate: dict[str, dict[str, object]] = {}
 
     for theme_name in ("dark", "light"):
-        dots = floyd_steinberg(density, mask if theme_name == "dark" else None)
+        dots = floyd_steinberg(density, mask)
         bands, sigma = band_map(dots)
         order, spatial, straight = choose_schedule(bands)
         p0 = evenly_sample(dots, TRAVELLERS)
@@ -735,13 +820,13 @@ def main() -> None:
             "bands": bands,
             "travellers": travellers,
         }
-        svg = build_svg(theme_name, dots, bands, order, travellers)
+        svg = build_svg(theme_name, dots, bands, order, travellers, technologies)
         out = args.output_dir / f"{theme_name}.svg"
         out.write_text(svg, encoding="utf-8", newline="\n")
         ET.parse(out)
         theme_data[theme_name] = {
             "dot_count": len(dots),
-            "foreground_mask_pixels": sum(sum(row) for row in mask) if theme_name == "dark" else PW * PH,
+            "foreground_mask_pixels": sum(sum(row) for row in mask),
             "noise_sigma": round(sigma, 4),
             "intro_spatial_evenness": round(spatial, 5),
             "straight_boundary_metric": round(straight, 5),
