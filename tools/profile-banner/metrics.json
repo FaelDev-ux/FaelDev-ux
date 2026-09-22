@@ -8,7 +8,7 @@
     340
   ],
   "bands": 94,
-  "traveller_dots": 900,
+  "traveller_dots": 3600,
   "intro_groups": 60,
   "intro_seconds": 3.2,
   "loop_seconds": 22.0,
@@ -47,8 +47,8 @@
   },
   "intermediate": {
     "file": "portrait-data.npz",
-    "file_bytes": 137290,
-    "sha256": "ac7f23c689eae30fdd0124bb9f3dbf892e0c0500a7c2c52677267f495e364cab",
+    "file_bytes": 361743,
+    "sha256": "2e725a623cd08c6a9614d019a3217d5a5f2815d157dd3afc23445ba29f0e5074",
     "npz_valid": true,
     "members": [
       "subject_mask.npy",
@@ -69,18 +69,18 @@
       "intro_spatial_evenness": 0.0383,
       "straight_boundary_metric": 0.00306,
       "mean_travel_px": {
-        "portrait_to_nextjs": 87.142,
-        "nextjs_to_code": 44.308,
-        "code_to_vercel": 46.431,
-        "vercel_to_javascript": 62.138,
-        "javascript_to_typescript": 19.403,
-        "typescript_to_react": 32.626,
-        "react_to_tailwind": 26.503,
-        "tailwind_to_python": 20.302,
-        "python_to_supabase": 26.06,
-        "supabase_to_portrait": 97.675
+        "portrait_to_nextjs": 86.689,
+        "nextjs_to_code": 44.085,
+        "code_to_vercel": 46.594,
+        "vercel_to_javascript": 62.688,
+        "javascript_to_typescript": 15.465,
+        "typescript_to_react": 32.875,
+        "react_to_tailwind": 27.01,
+        "tailwind_to_python": 20.095,
+        "python_to_supabase": 25.898,
+        "supabase_to_portrait": 96.338
       },
-      "file_bytes": 860361,
+      "file_bytes": 2560889,
       "xml_valid": true
     },
     "light": {
@@ -90,18 +90,18 @@
       "intro_spatial_evenness": 0.01924,
       "straight_boundary_metric": 0.00306,
       "mean_travel_px": {
-        "portrait_to_nextjs": 78.342,
-        "nextjs_to_code": 44.478,
-        "code_to_vercel": 46.233,
-        "vercel_to_javascript": 62.094,
-        "javascript_to_typescript": 17.787,
-        "typescript_to_react": 32.904,
-        "react_to_tailwind": 26.403,
-        "tailwind_to_python": 20.369,
-        "python_to_supabase": 26.258,
-        "supabase_to_portrait": 89.71
+        "portrait_to_nextjs": 78.783,
+        "nextjs_to_code": 44.708,
+        "code_to_vercel": 46.32,
+        "vercel_to_javascript": 62.869,
+        "javascript_to_typescript": 13.445,
+        "typescript_to_react": 33.019,
+        "react_to_tailwind": 27.379,
+        "tailwind_to_python": 19.962,
+        "python_to_supabase": 25.668,
+        "supabase_to_portrait": 88.19
       },
-      "file_bytes": 1091354,
+      "file_bytes": 2790230,
       "xml_valid": true
     }
   }

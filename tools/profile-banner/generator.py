@@ -38,7 +38,7 @@ W, H = 1180, 610
 PW, PH = 300, 340
 PX, PY = 74, 164
 BANDS = 94
-TRAVELLERS = 900
+TRAVELLERS = 3600
 INTRO_GROUPS = 60
 INTRO_SECONDS = 3.2
 SEED = 24072003
@@ -378,19 +378,19 @@ def thick_line_points(
 
 def nextjs_points(n: int) -> list[tuple[float, float]]:
     """Recognizable Next.js mark: enclosing ring and its diagonal N monogram."""
-    if n != TRAVELLERS:
-        raise ValueError(f"Next.js state requires exactly {TRAVELLERS} dots")
-
     out: list[tuple[float, float]] = []
-    ring_n = 300
+    ring_n = round(n * 300 / 900)
+    left_n = round(n * 180 / 900)
+    diagonal_n = round(n * 300 / 900)
+    right_n = n - ring_n - left_n - diagonal_n
     for i in range(ring_n):
         angle = (2 * math.pi * i / ring_n) - (math.pi / 2)
         out.append((150 + 111 * math.cos(angle), 170 + 111 * math.sin(angle)))
 
     # The long diagonal exits toward the lower-right, matching the familiar mark.
-    out.extend(thick_line_points((98, 109), (98, 231), 180, 10, 6))
-    out.extend(thick_line_points((98, 109), (248, 271), 300, 11, 6))
-    out.extend(thick_line_points((205, 109), (205, 204), 120, 10, 6))
+    out.extend(thick_line_points((98, 109), (98, 231), left_n, 10, 6))
+    out.extend(thick_line_points((98, 109), (248, 271), diagonal_n, 11, 6))
+    out.extend(thick_line_points((205, 109), (205, 204), right_n, 10, 6))
     assert len(out) == n
     return out
 
