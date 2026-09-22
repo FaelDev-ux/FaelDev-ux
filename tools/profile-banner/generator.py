@@ -39,6 +39,7 @@ PW, PH = 300, 340
 PX, PY = 74, 164
 BANDS = 94
 TRAVELLERS = 3600
+PARTICLE_SIZE = 1.9
 INTRO_GROUPS = 60
 INTRO_SECONDS = 3.2
 SEED = 24072003
@@ -446,7 +447,7 @@ def greedy_nearest(
     return matched
 
 
-def dot_path(points: list[tuple[float, float]], size: float = 1.55) -> str:
+def dot_path(points: list[tuple[float, float]], size: float = PARTICLE_SIZE) -> str:
     chunks = []
     s = f"{size:.2f}".rstrip("0").rstrip(".")
     neg = f"{-size:.2f}".rstrip("0").rstrip(".")
@@ -767,6 +768,7 @@ def main() -> None:
         "portrait_grid": [PW, PH],
         "bands": BANDS,
         "traveller_dots": TRAVELLERS,
+        "particle_size": PARTICLE_SIZE,
         "intro_groups": INTRO_GROUPS,
         "intro_seconds": INTRO_SECONDS,
         "loop_seconds": LOOP_SECONDS,

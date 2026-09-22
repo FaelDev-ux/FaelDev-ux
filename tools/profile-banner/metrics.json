@@ -9,6 +9,7 @@
   ],
   "bands": 94,
   "traveller_dots": 3600,
+  "particle_size": 1.9,
   "intro_groups": 60,
   "intro_seconds": 3.2,
   "loop_seconds": 22.0,
@@ -80,7 +81,7 @@
         "python_to_supabase": 25.898,
         "supabase_to_portrait": 96.338
       },
-      "file_bytes": 2560889,
+      "file_bytes": 2323289,
       "xml_valid": true
     },
     "light": {
@@ -101,7 +102,7 @@
         "python_to_supabase": 25.668,
         "supabase_to_portrait": 88.19
       },
-      "file_bytes": 2790230,
+      "file_bytes": 2552630,
       "xml_valid": true
     }
   }
