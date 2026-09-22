@@ -31,7 +31,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 
 W, H = 1180, 610
@@ -226,6 +226,91 @@ def technology_logo_points(path: Path, n: int) -> list[tuple[float, float]]:
         for y in range(PH)
         for x in range(PW)
         if canvas.getpixel((x, y)) >= 96
+    ]
+    return evenly_sample(points, n)
+
+
+def python_logo_points(n: int) -> list[tuple[float, float]]:
+    """Build the complete Python mark so a cropped source image cannot clip its tail."""
+    mask = Image.new("L", (PW, PH), 0)
+    draw = ImageDraw.Draw(mask)
+    scale = 230 / 56
+    offset_x = (PW - 64 * scale) / 2
+    offset_y = (PH - 64 * scale) / 2
+
+    def transform(point: tuple[float, float]) -> tuple[float, float]:
+        return (offset_x + point[0] * scale, offset_y + point[1] * scale)
+
+    def cubic(
+        points: list[tuple[float, float]],
+        control_a: tuple[float, float],
+        control_b: tuple[float, float],
+        end: tuple[float, float],
+        steps: int = 12,
+    ) -> None:
+        start_x, start_y = points[-1]
+        for step in range(1, steps + 1):
+            t = step / steps
+            inv = 1 - t
+            points.append(
+                (
+                    inv**3 * start_x
+                    + 3 * inv**2 * t * control_a[0]
+                    + 3 * inv * t**2 * control_b[0]
+                    + t**3 * end[0],
+                    inv**3 * start_y
+                    + 3 * inv**2 * t * control_a[1]
+                    + 3 * inv * t**2 * control_b[1]
+                    + t**3 * end[1],
+                )
+            )
+
+    upper = [(30.25, 4.0)]
+    cubic(upper, (23.4628, 4.0), (18.0, 7.9025), (18.0, 12.75))
+    upper.extend(((18.0, 15.0), (32.0, 15.0), (32.0, 18.0), (12.75, 18.0)))
+    cubic(upper, (7.9025, 18.0), (4.0, 23.4628), (4.0, 30.25))
+    upper.append((4.0, 33.75))
+    cubic(upper, (4.0, 40.5372), (7.9025, 46.0), (12.75, 46.0))
+    upper.extend(((18.0, 46.0), (18.0, 39.0)))
+    cubic(upper, (18.0, 35.122), (21.122, 32.0), (25.0, 32.0))
+    upper.append((39.0, 32.0))
+    cubic(upper, (39.0, 32.0), (46.0, 32.0), (46.0, 25.0))
+    upper.append((46.0, 12.75))
+    cubic(upper, (46.0, 7.9025), (40.5372, 4.0), (33.75, 4.0))
+
+    lower = [(46.0, 18.0), (46.0, 25.0)]
+    cubic(lower, (46.0, 28.878), (42.878, 32.0), (39.0, 32.0))
+    lower.append((25.0, 32.0))
+    cubic(lower, (25.0, 32.0), (18.0, 32.0), (18.0, 39.0))
+    lower.append((18.0, 51.25))
+    cubic(lower, (18.0, 56.0968), (23.4628, 60.0), (30.25, 60.0))
+    lower.append((33.75, 60.0))
+    cubic(lower, (40.5372, 60.0), (46.0, 56.0968), (46.0, 51.25))
+    lower.extend(((46.0, 49.0), (32.0, 49.0), (32.0, 46.0), (51.25, 46.0)))
+    cubic(lower, (56.0968, 46.0), (60.0, 40.5372), (60.0, 33.75))
+    lower.append((60.0, 30.25))
+    cubic(lower, (60.0, 23.4628), (56.0968, 18.0), (51.25, 18.0))
+
+    draw.polygon([transform(point) for point in upper], fill=255)
+    draw.polygon([transform(point) for point in lower], fill=255)
+    eye_radius = 1.65 * scale
+    for eye in ((25.5, 8.5), (39.5, 55.5)):
+        eye_x, eye_y = transform(eye)
+        draw.ellipse(
+            (
+                eye_x - eye_radius,
+                eye_y - eye_radius,
+                eye_x + eye_radius,
+                eye_y + eye_radius,
+            ),
+            fill=0,
+        )
+
+    points = [
+        (x, y)
+        for y in range(PH)
+        for x in range(PW)
+        if mask.getpixel((x, y)) >= 96
     ]
     return evenly_sample(points, n)
 
@@ -758,7 +843,11 @@ def main() -> None:
         for name, filename, mime_type in TECHNOLOGIES
     ]
     logo_targets = {
-        state_name: technology_logo_points(args.assets_dir / filename, TRAVELLERS)
+        state_name: (
+            python_logo_points(TRAVELLERS)
+            if state_name == "python"
+            else technology_logo_points(args.assets_dir / filename, TRAVELLERS)
+        )
         for state_name, filename in TECH_LOOP
     }
 
@@ -769,6 +858,7 @@ def main() -> None:
         "bands": BANDS,
         "traveller_dots": TRAVELLERS,
         "particle_size": PARTICLE_SIZE,
+        "python_loop_source": "procedural-complete-mark",
         "intro_groups": INTRO_GROUPS,
         "intro_seconds": INTRO_SECONDS,
         "loop_seconds": LOOP_SECONDS,
